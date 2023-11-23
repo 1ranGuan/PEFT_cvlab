@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import os.path as osp
 
 from mmengine.config import Config, DictAction
