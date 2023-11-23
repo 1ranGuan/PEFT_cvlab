@@ -2,6 +2,13 @@
 dataset_type = 'CocoDataset'
 data_root = '/data/yrguan/CVlab/dataset/'
 
+# visualizer = dict(
+#     type='DetLocalVisualizer',
+#     vis_backends=[
+#         dict(type='TensorboardVisBackend'),
+#     ],
+#     name='visualizer'
+# )
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
 # automatically infer from prefix (not support LMDB and Memcache yet)
