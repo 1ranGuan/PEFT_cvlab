@@ -24,7 +24,7 @@ train_pipeline = [
     dict(
         type='RandomResize',
         scale=image_size,
-        ratio_range=(0.1, 2.0),
+        ratio_range=(0.8, 1.5),
         keep_ratio=True),
     dict(
         type='RandomCrop',

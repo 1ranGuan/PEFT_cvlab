@@ -1,4 +1,4 @@
-_base_ = ['cascade-rcnn_r50_fpn_1x.py']
+_base_ = ['sparse-rcnn_r50_fpn_1x_coco.py']
 
 pretrained = '/data/yrguan/CVlab/mmdetection/configs/cvlab/sam_vit_b_01ec64.pth'  # sam pretrained
 
