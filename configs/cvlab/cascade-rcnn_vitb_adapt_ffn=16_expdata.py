@@ -1,13 +1,31 @@
-_base_ = ['cascade-rcnn_r50_fpn_1x.py']
+_base_ = ['cascade-rcnn_r50_fpn_1x_expdata.py']
 
 pretrained = '/data/yrguan/CVlab/mmdetection/configs/cvlab/sam_vit_b_01ec64.pth'  # sam pretrained
 
 norm_cfg = dict(type='LN2d', requires_grad=True)
-
+custom_hooks = [dict(type='Fp16CompresssionHook')]
 # fine-tuning configs 配置微调参数
-tuning_config = None
-
+tuning_config = dict(
+    # AdaptFormer
+    SEadapter=False,
+    adaptmix=False,
+    ffn_adapt=True,
+    ffn_option="parallel",
+    ffn_adapter_layernorm_option="none",
+    ffn_adapter_init_option="lora",
+    ffn_adapter_scalar="0.1",
+    ffn_num=16,
+    d_model=768,
+    # VPT related
+    vpt_on=False,
+    vpt_num=1
+)
+image_size = (1024, 1024)
+batch_augments = [
+    dict(type='BatchFixedSizePad', size=image_size, pad_mask=True)
+]
 model = dict(
+    data_preprocessor=dict(pad_size_divisor=32, batch_augments=batch_augments),
     backbone=dict(
         _delete_=True,
         type='VisionTransformer',
@@ -28,14 +46,14 @@ model = dict(
         checkpoint = pretrained,
         tuning_config = tuning_config,
         use_checkpoint=False),
-        neck=dict(
-            _delete_=True,
-            type='SimpleFPN',
-            backbone_channel=768,
-            in_channels=[192, 384, 768, 768],
-            out_channels=256,
-            num_outs=5,
-            norm_cfg=norm_cfg))
+    neck=dict(
+        _delete_=True,
+        type='SimpleFPN',
+        backbone_channel=768,
+        in_channels=[192, 384, 768, 768],
+        out_channels=256,
+        num_outs=5,
+        norm_cfg=norm_cfg))
 
 optim_wrapper = dict(
     type='AmpOptimWrapper',
