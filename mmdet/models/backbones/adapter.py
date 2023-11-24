@@ -32,15 +32,18 @@ class Adapter(nn.Module):
             self.scale = nn.Parameter(torch.ones(1))
         else:
             self.scale = float(adapter_scalar)
-
-        self.down_proj = nn.Linear(self.n_embd, self.down_size)
-        self.non_linear_func = nn.ReLU()
-        self.up_proj = nn.Linear(self.down_size, self.n_embd)
+        if self.down_size == 0:
+            self.down_proj = None
+            self.up_proj = None
+        else:
+            self.down_proj = nn.Linear(self.n_embd, self.down_size)
+            self.non_linear_func = nn.ReLU()
+            self.up_proj = nn.Linear(self.down_size, self.n_embd)
 
         self.dropout = dropout
         if init_option == "bert":
             raise NotImplementedError
-        elif init_option == "lora":
+        elif init_option == "lora" and self.down_size != 0:
             with torch.no_grad():
                 nn.init.kaiming_uniform_(self.down_proj.weight, a=math.sqrt(5))
                 nn.init.zeros_(self.up_proj.weight)
@@ -51,13 +54,14 @@ class Adapter(nn.Module):
         residual = x if residual is None else residual
         if self.adapter_layernorm_option == 'in':
             x = self.adapter_layer_norm_before(x)
-
-        down = self.down_proj(x)
-        down = self.non_linear_func(down)
-        down = nn.functional.dropout(down, p=self.dropout, training=self.training)
-        up = self.up_proj(down)
-
-        up = up * self.scale
+        if self.down_size == 0:
+            up = x
+        else:
+            down = self.down_proj(x)
+            down = self.non_linear_func(down)
+            down = nn.functional.dropout(down, p=self.dropout, training=self.training)
+            up = self.up_proj(down)
+            up = up * self.scale
 
         if self.adapter_layernorm_option == 'out':
             up = self.adapter_layer_norm_before(up)

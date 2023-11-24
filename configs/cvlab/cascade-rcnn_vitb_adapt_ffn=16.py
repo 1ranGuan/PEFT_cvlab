@@ -20,8 +20,12 @@ tuning_config = dict(
     vpt_on=False,
     vpt_num=1
 )
-
+image_size = (1024, 1024)
+batch_augments = [
+    dict(type='BatchFixedSizePad', size=image_size, pad_mask=True)
+]
 model = dict(
+    data_preprocessor=dict(pad_size_divisor=32, batch_augments=batch_augments),
     backbone=dict(
         _delete_=True,
         type='VisionTransformer',
@@ -85,7 +89,7 @@ param_scheduler = [
         milestones=[32, 44],
         gamma=0.1)
 ]
-runner = dict(type='EpochBasedRunner', max_epochs=36)
+runner = dict(type='EpochBasedRunner', max_epochs=48)
 checkpoint_config = dict(interval=3)
 
 data = dict(

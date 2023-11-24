@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 import os.path as osp
 import warnings
 from copy import deepcopy
