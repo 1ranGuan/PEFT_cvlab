@@ -18,7 +18,7 @@ from mmdet.registry import METRICS
 from mmdet.structures.mask import encode_mask_results
 from ..functional import eval_recalls
 
-
+need_F1 = True
 @METRICS.register_module()
 class CocoMetric(BaseMetric):
     """COCO evaluation metric.
@@ -465,7 +465,7 @@ class CocoMetric(BaseMetric):
                 logger.error(
                     'The testing results of the whole dataset is empty.')
                 break
-
+            
             if self.use_mp_eval:
                 coco_eval = COCOevalMP(self._coco_api, coco_dt, iou_type)
             else:
@@ -475,6 +475,7 @@ class CocoMetric(BaseMetric):
             coco_eval.params.imgIds = self.img_ids
             coco_eval.params.maxDets = list(self.proposal_nums)
             coco_eval.params.iouThrs = self.iou_thrs
+            # coco_eval.params.iouThrs = [0.5]
 
             # mapping of cocoEval.stats
             coco_metric_names = {
@@ -517,6 +518,79 @@ class CocoMetric(BaseMetric):
                 coco_eval.evaluate()
                 coco_eval.accumulate()
                 coco_eval.summarize()
+
+                if need_F1:
+                    # 过gt和pred计算每个类别的recall
+                    precisions = coco_eval.eval['precision'] # TP/(TP+FP) right/detection
+                    recalls = coco_eval.eval['recall'] # iou*class_num*Areas*Max_det TP/(TP+FN) right/gt
+                    print('\nIOU:{} MAP:{:.3f} Recall:{:.3f}'.format(coco_eval.params.iouThrs[0],np.mean(precisions[0, :, :, 0, -1]),np.mean(recalls[0, :, 0, -1])))
+                    # Compute per-category AP
+                    # from https://github.com/facebookresearch/detectron2/
+                    # precision: (iou, recall, cls, area range, max dets)
+                    results_per_category = []
+                    results_per_category_iou50 = []
+
+                    res_item = []
+                    print('class_num:',len(coco_eval.params.catIds))
+                    total_f1 = []
+                    for idx, catId in enumerate(range(len(coco_eval.params.catIds))):
+                        name = idx
+                        precision = precisions[:, :, idx, 0, -1]
+                        precision_50 = precisions[0, :, idx, 0, -1]
+                        
+                        precision = precision[precision > -1]
+                        recall = recalls[ :, idx, 0, -1]
+                        recall_50 = recalls[0, idx, 0, -1]
+                        recall = recall[recall > -1]
+
+                        if precision.size:
+                            ap = np.mean(precision)
+                            ap_50 = np.mean(precision_50)
+                            rec = np.mean(recall)
+                            rec_50 = np.mean(recall_50)
+                        else:
+                            ap = float('nan')
+                            ap_50 = float('nan')
+                            rec = float('nan')
+                            rec_50 = float('nan')
+                        res_item = [f'{name}', f'{float(ap):0.3f}',f'{float(rec):0.3f}']
+                        results_per_category.append(res_item)
+                        res_item_50 = [f'{name}', f'{float(ap_50):0.3f}', f'{float(rec_50):0.3f}']
+                        f1_score = 2 * float(res_item_50[1])*float(res_item_50[2])/(float(res_item_50[1])+float(res_item_50[2]))
+                        total_f1.append(f1_score)
+                        print('种类:{0},准确率ap:{1},召回率r:{2},f1 score:{3}'.format(res_item_50[0],res_item_50[1],res_item_50[2],f1_score))
+                        results_per_category_iou50.append(res_item_50)
+
+                    print('总体的f1_score 为:{}'.format(sum(total_f1)/len(total_f1)))
+                    item_num = len(res_item)
+                    num_columns = min(6, len(results_per_category) * item_num)
+                    results_flatten = list(
+                        itertools.chain(*results_per_category))
+                    headers = ['category', 'AP', 'Recall'] * (num_columns // item_num)
+                    results_2d = itertools.zip_longest(*[
+                        results_flatten[i::num_columns]
+                        for i in range(num_columns)
+                    ])
+                    table_data = [headers]
+                    table_data += [result for result in results_2d]
+                    table = AsciiTable(table_data)
+                    print('\n' + table.table)
+
+                    num_columns_50 = min(6, len(results_per_category_iou50) * item_num)
+                    results_flatten_50 = list(
+                        itertools.chain(*results_per_category_iou50))
+                    iou_ = coco_eval.params.iouThrs[0]
+                    headers_50 = ['category', 'AP{}'.format(iou_),'Recall{}'.format(iou_)] * (num_columns_50 // item_num)
+                    results_2d_50 = itertools.zip_longest(*[
+                        results_flatten_50[i::num_columns_50]
+                        for i in range(num_columns_50)
+                    ])
+
+                    table_data_50 = [headers_50]
+                    table_data_50 += [result for result in results_2d_50]
+                    table_50 = AsciiTable(table_data_50)
+                    print('\n' + table_50.table)
+                    
                 if self.classwise:  # Compute per-category AP
                     # Compute per-category AP
                     # from https://github.com/facebookresearch/detectron2/
