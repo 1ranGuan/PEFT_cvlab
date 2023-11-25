@@ -5,6 +5,7 @@ import json
 ## 计算coco格式数据集每一类的数量
 
 # 1. 读取coco格式的json文件
+#'/data/yrguan/CVlab/expansion_dataset/annotations/train.json'
 json_file = '/data/yrguan/CVlab/dataset/annotations/val.json'
 with open(json_file, 'r') as f:
     data = json.load(f)

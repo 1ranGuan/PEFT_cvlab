@@ -556,7 +556,7 @@ class CocoMetric(BaseMetric):
                         res_item = [f'{name}', f'{float(ap):0.3f}',f'{float(rec):0.3f}']
                         results_per_category.append(res_item)
                         res_item_50 = [f'{name}', f'{float(ap_50):0.3f}', f'{float(rec_50):0.3f}']
-                        f1_score = 2 * float(res_item_50[1])*float(res_item_50[2])/(float(res_item_50[1])+float(res_item_50[2]))
+                        f1_score = 2 * float(res_item_50[1])*float(res_item_50[2])/(float(res_item_50[1])+float(res_item_50[2])+1e-6)
                         total_f1.append(f1_score)
                         print('种类:{0},准确率ap:{1},召回率r:{2},f1 score:{3}'.format(res_item_50[0],res_item_50[1],res_item_50[2],f1_score))
                         results_per_category_iou50.append(res_item_50)
@@ -590,7 +590,7 @@ class CocoMetric(BaseMetric):
                     table_data_50 += [result for result in results_2d_50]
                     table_50 = AsciiTable(table_data_50)
                     print('\n' + table_50.table)
-                    
+
                 if self.classwise:  # Compute per-category AP
                     # Compute per-category AP
                     # from https://github.com/facebookresearch/detectron2/
