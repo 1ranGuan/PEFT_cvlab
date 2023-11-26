@@ -449,6 +449,8 @@ class CocoMetric(BaseMetric):
             if metric not in result_files:
                 raise KeyError(f'{metric} is not in results')
             try:
+
+
                 predictions = load(result_files[metric])
                 if iou_type == 'segm':
                     # Refer to https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocotools/coco.py#L331  # noqa
