@@ -1,4 +1,4 @@
-# Optimizing Engineering Vehicle Object Detection Performance Via Efficient Fine-Tuning  (Computer Vision Homework in HUST AIA)
+# Optimizing Engineering Vehicle Detection Performance Via Efficient Fine-Tuning  (Computer Vision Homework in HUST AIA)
 
 The code is based on mmdetection, thanks to their efforts for the Computer Vision Society.
 
